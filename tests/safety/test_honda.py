@@ -32,6 +32,13 @@ class TestHondaSafety(unittest.TestCase):
 
     return to_send
 
+  def _alt_brake_msg(self, brake):
+    to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
+    to_send[0].RIR = 0x1BE << 21
+    to_send[0].RDHR = 0x10 if brake else 0
+
+    return to_send
+
   def _gas_msg(self, gas):
     to_send = libpandasafety_py.ffi.new('CAN_FIFOMailBox_TypeDef *')
     to_send[0].RIR = 0x17C << 21
@@ -92,6 +99,11 @@ class TestHondaSafety(unittest.TestCase):
   def test_disengage_on_brake(self):
     self.safety.set_controls_allowed(1)
     self.safety.honda_rx_hook(self._brake_msg(1))
+    self.assertFalse(self.safety.get_controls_allowed())
+
+  def test_alt_disengage_on_brake(self):
+    self.safety.set_controls_allowed(1)
+    self.safety.honda_rx_hook(self._alt_brake_msg(1))
     self.assertFalse(self.safety.get_controls_allowed())
 
   def test_allow_brake_at_zero_speed(self):
